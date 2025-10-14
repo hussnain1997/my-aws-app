@@ -1,0 +1,9 @@
+flask
+flask-cors
+CORS(app)
+requests
+apscheduler
+mysql-connector-python
+boto3
+getpass  # For secure password input (built-in, no pip needed)
+termcolor  # For colorful text to make login "attractive"
