@@ -74,8 +74,8 @@ resource "aws_security_group" "ec2_sg" {
   vpc_id      = aws_vpc.myvpc.id
 
   ingress {
-    from_port   = 80
-    to_port     = 80
+    from_port   = 3000
+    to_port     = 3000
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
@@ -109,6 +109,13 @@ resource "aws_security_group" "app_sg" {
     to_port     = 5002
     protocol    = "tcp"
     cidr_blocks = ["10.0.0.0/16"]
+  }
+
+  ingress {
+    from_port       = 22
+    to_port         = 22
+    protocol        = "tcp"
+    security_groups = [aws_security_group.ec2_sg.id]  // Allow SSH from presentation_ec2
   }
 
   egress {
@@ -167,7 +174,7 @@ resource "aws_instance" "presentation_ec2" {
   }
 }
 
-# Application Tier EC2 (Private)
+# Application Tier EC2 (Private) with IAM Profile
 resource "aws_instance" "application_ec2" {
   ami           = "ami-052064a798f08f0d3"
   instance_type = "t2.micro"
@@ -183,6 +190,7 @@ resource "aws_instance" "application_ec2" {
                  sudo usermod -aG docker ec2-user
                  sudo docker run -d -p 5002:5002 back-app
                  EOF
+  iam_instance_profile = aws_iam_instance_profile.ssm_profile.name  // Added for SSM
   tags = {
     Name = "ApplicationEC2"
   }
@@ -208,4 +216,29 @@ resource "aws_db_subnet_group" "db_subnet_group" {
   tags = {
     Name = "MyDBSubnetGroup"
   }
+}
+
+# IAM Role for SSM
+resource "aws_iam_role" "ssm_role" {
+  name = "SSMRole"
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Action = "sts:AssumeRole"
+      Effect = "Allow"
+      Principal = { Service = "ec2.amazonaws.com" }
+    }]
+  })
+}
+
+# Attach SSM Policy to Role
+resource "aws_iam_role_policy_attachment" "ssm_attach" {
+  role       = aws_iam_role.ssm_role.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
+# IAM Instance Profile for SSM
+resource "aws_iam_instance_profile" "ssm_profile" {
+  name = "SSMProfile"
+  role = aws_iam_role.ssm_role.name
 }
