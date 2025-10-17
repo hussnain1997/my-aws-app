@@ -5,8 +5,12 @@ import time
 import mysql.connector
 import boto3
 from apscheduler.schedulers.background import BackgroundScheduler
-import getpass  # For hidden password input
+import os  # Added for environment variables
+from dotenv import load_dotenv  # Added for loading .env file
 from termcolor import colored  # For colors
+
+# Load environment variables from .env file (for local development)
+load_dotenv()
 
 app = Flask(__name__)
 CORS(app)  # Enable CORS for all routes (allows React to connect)
@@ -14,12 +18,12 @@ CORS(app)  # Enable CORS for all routes (allows React to connect)
 scheduler = BackgroundScheduler()
 scheduler.start()
 
-# DB placeholder - update with real Aurora details later
+# DB configuration using environment variables
 DB = {
-    'host': 'myaurora.cluster-xxx.us-east-1.rds.amazonaws.com',  # Replace with your endpoint
-    'user': 'admin',
-    'password': 'AuroraPass123',  # Replace with your password
-    'database': 'mydata'
+    'host': os.getenv('DB_HOST'),
+    'user': os.getenv('DB_USER'),
+    'password': os.getenv('DB_PASSWORD'),
+    'database': os.getenv('DB_DATABASE')
 }
 
 cloudwatch = boto3.client('cloudwatch')
@@ -67,21 +71,5 @@ def home():
     return "Welcome to the API Polling Backend! Use /start with a POST request or the React form."
 
 if __name__ == '__main__':
-    # Attractive Console Login
-    print(colored("🌟 Welcome to the Backend Server! 🌟", 'yellow'))
-    print(colored("Please login to start the server:", 'cyan'))
-    print("""
-    ╔════════════════════════════╗
-    ║        LOGIN PORTAL        ║
-    ╚════════════════════════════╝
-    """)
-
-    username = input(colored("Username: ", 'green'))
-    password = getpass.getpass(colored("Password (hidden): ", 'green'))
-
-    # Simple check (change to your real username/password)
-    if username == "admin" and password == "123":
-        print(colored("✅ Login successful! Starting server...", 'green'))
-        app.run(host='0.0.0.0', port=5002)
-    else:
-        print(colored("❌ Wrong username or password. Server not starting.", 'red'))
+    print(colored("🌟 Starting Backend Server... 🌟", 'yellow'))
+    app.run(host='0.0.0.0', port=5002)
