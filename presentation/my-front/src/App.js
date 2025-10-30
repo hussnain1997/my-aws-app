@@ -8,7 +8,7 @@ function App() {
 const handleSubmit = async (e) => {
   e.preventDefault();
   try {
-    const loginRes = await fetch('http://192.168.100.160:5002/login', {  // Change to localhost for local test
+    const loginRes = await fetch('http://localhost:5002/login', {  // Change to localhost for local test
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username: 'admin', password: '123' }),
@@ -16,7 +16,7 @@ const handleSubmit = async (e) => {
     const loginData = await loginRes.json();
     const token = loginData.token;
 
-    const startRes = await fetch('http://192.168.100.160:5002/start', {
+    const startRes = await fetch('http://localhost:5002/start', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify({ endpoint, frequency, duration }),
